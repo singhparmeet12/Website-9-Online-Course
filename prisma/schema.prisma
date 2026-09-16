@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String             @id @default(cuid())
+  email       String             @unique
+  name        String
+  avatar      String?
+  streakDays  Int                @default(1)
+  xpPoints    Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  enrollments Enrollment[]
+  completions LessonCompletion[]
+}
+
+model Instructor {
+  id            String   @id @default(cuid())
+  name          String
+  title         String
+  bio           String
+  avatar        String
+  rating        Float    @default(4.9)
+  studentsCount Int      @default(1200)
+  courseCount   Int      @default(3)
+  specialties   String   // JSON string of tags e.g. ["Next.js", "TypeScript", "UI Architecture"]
+  courses       Course[]
+  createdAt     DateTime @default(now())
+}
+
+model Course {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  title         String
+  tagline       String
+  description   String
+  category      String       // e.g. "Web Development", "UI/UX Design", "AI & Data", "Mobile"
+  level         String       // "Beginner", "Intermediate", "Advanced"
+  durationHours Float
+  price         Float        @default(0)
+  rating        Float        @default(4.9)
+  reviewsCount  Int          @default(120)
+  image         String
+  featured      Boolean      @default(false)
+  instructorId  String
+  instructor    Instructor   @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  modules       Module[]
+  enrollments   Enrollment[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  order       Int
+  description String
+  icon        String   @default("book") // "compass", "code", "layout", "database", "rocket", "award"
+  lessons     Lesson[]
+  createdAt   DateTime @default(now())
+}
+
+model Lesson {
+  id              String             @id @default(cuid())
+  moduleId        String
+  module          Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title           String
+  order           Int
+  durationMinutes Int
+  type            String             // "video", "reading", "quiz"
+  summary         String
+  content         String             // Markdown or rich content for readings/quizzes
+  videoUrl        String?            // Optional video reference or embed
+  completions     LessonCompletion[]
+  createdAt       DateTime           @default(now())
+}
+
+model Enrollment {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progressPercent Float     @default(0)
+  enrolledAt      DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@unique([userId, courseId])
+}
+
+model LessonCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
