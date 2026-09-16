@@ -101,7 +101,12 @@ export default function DashboardPage() {
       setLoading(true);
       const res = await fetch("/api/dashboard");
       const json = await res.json();
-      setData(json);
+      if (res.ok && json && json.student) {
+        setData(json);
+      } else {
+        console.error("Invalid dashboard payload:", json);
+        setData(null);
+      }
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
     } finally {
